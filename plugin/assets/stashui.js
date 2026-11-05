@@ -95,7 +95,7 @@ function rateBtn(ctx, isAlive) {
   const label = (s) => {
     b.textContent = rating ? "★" + s.show(rating) : "☆";
     b.title = rating ? "Rating " + s.show(rating) + " - click to change" : "Rate this scene";
-    b.style.color = rating ? "#f5c518" : "";
+    b.style.color = rating ? "var(--pink, #ff3e8a)" : "";
   };
   Promise.all([getScale(), gql("query($id:ID!){findScene(id:$id){rating100}}", { id: ctx.id })])
     .then(([s, d]) => { if (!isAlive()) return; rating = d.findScene && d.findScene.rating100; label(s); })
@@ -106,15 +106,19 @@ function rateBtn(ctx, isAlive) {
     if (document.querySelector(".px-rate-menu")) return closeRate();
     const s = await getScale();
     const r = b.getBoundingClientRect();
+    // Built from Stash UI's own menu classes (kb-pmenu), so it follows its look and theme.
     const m = document.createElement("div");
-    m.className = "px-rate-menu";
-    m.style.cssText =
-      "position:fixed;z-index:99999;background:rgba(20,20,20,.96);border:1px solid #444;border-radius:8px;padding:8px;" +
-      "display:grid;grid-template-columns:repeat(5,2.4em);gap:5px;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.5);";
-    const head = document.createElement("div");
-    head.textContent = "Rate scene";
-    head.style.cssText = "grid-column:1/-1;color:#ccc;text-align:center;margin-bottom:2px";
-    m.appendChild(head);
+    m.className = "kb-pmenu px-rate-menu";
+    m.style.cssText = "position:fixed;z-index:99999;width:auto;min-width:0;max-height:none;right:auto;bottom:auto;";
+    const sec = document.createElement("div");
+    sec.className = "kb-pmenu-sec";
+    const head = document.createElement("b");
+    head.textContent = "Rating";
+    sec.appendChild(head);
+    const grid = document.createElement("div");
+    grid.style.cssText = "display:grid;grid-template-columns:repeat(5,minmax(2.5em,1fr));gap:2px;padding:2px 2px 4px";
+    sec.appendChild(grid);
+    m.appendChild(sec);
     const set = async (v) => {
       try {
         await gql("mutation($id:ID!,$r:Int){sceneUpdate(input:{id:$id,rating100:$r}){rating100}}", { id: ctx.id, r: v });
@@ -124,22 +128,24 @@ function rateBtn(ctx, isAlive) {
       } catch (err) { alert("Rating failed: " + err.message); }
       closeRate();
     };
-    s.opts.forEach((o, i) => {
+    s.opts.forEach((o) => {
       const x = document.createElement("button");
       x.type = "button";
-      x.textContent = o.label;
       const on = rating === o.v;
-      x.style.cssText = "height:2.2em;border:0;border-radius:4px;cursor:pointer;font-weight:bold;color:" + (on ? "#000" : "#fff") +
-        ";background:" + (on ? "#f5c518" : "hsl(" + Math.round(((i + 1) / s.opts.length) * 120) + ",55%,32%)");
+      x.className = "kb-pmenu-opt" + (on ? " is-on" : "");
+      x.textContent = o.label;
+      x.style.cssText = "justify-content:center;text-align:center;font-variant-numeric:tabular-nums;" +
+        (on ? "background:color-mix(in srgb,var(--pink,#ff3e8a) 18%,transparent);" : "");
       x.addEventListener("click", (ev) => { ev.stopPropagation(); set(o.v); });
-      m.appendChild(x);
+      grid.appendChild(x);
     });
     const c = document.createElement("button");
     c.type = "button";
+    c.className = "kb-pmenu-opt";
     c.textContent = "Clear rating";
-    c.style.cssText = "grid-column:1/-1;border:0;border-radius:4px;background:#555;color:#fff;cursor:pointer;height:2em;margin-top:2px";
+    c.style.cssText = "width:100%;justify-content:center;color:var(--faint,#a07a96);border-top:1px solid rgba(255,255,255,.1);border-radius:0 0 12px 12px;margin-top:2px";
     c.addEventListener("click", (ev) => { ev.stopPropagation(); set(null); });
-    m.appendChild(c);
+    sec.appendChild(c);
     ["click", "keydown", "dblclick"].forEach((t) => m.addEventListener(t, (ev) => ev.stopPropagation()));
     document.body.appendChild(m);
     const w = m.offsetWidth, h = m.offsetHeight;
