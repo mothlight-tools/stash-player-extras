@@ -1,0 +1,8 @@
+- id: player-extras
+  name: Player Extras
+  metadata:
+    description: Player buttons for Stash - details panel, motion heatmap, marker skip, rating popup, task queue, VR zoom, scroll memory.
+  version: 1.1.0
+  date: "2026-11-05 00:00:00"
+  path: player-extras.zip
+  sha256: 151dbe354f860a2658f9e7f68f9d128260aa6315f6196b3158c95b7918685320
