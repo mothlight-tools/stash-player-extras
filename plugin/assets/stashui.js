@@ -43,11 +43,117 @@ function flash(video, txt) {
   t._h = setTimeout(() => (t.style.opacity = 0), 2200);
 }
 
+const iconBtn = (txt, title) => {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "kb-btn is-icon is-ghost px-btn";
+  b.textContent = txt;
+  b.title = title;
+  b.style.cssText = "font-size:16px;line-height:1;font-weight:bold;";
+  return b;
+};
+
+// ☰ - opens/closes Stash UI's own details panel (same as its ⓘ button / the I key).
+function panelBtn() {
+  const b = iconBtn("☰", "Details panel on/off  (I)");
+  b.addEventListener("click", (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const t = Array.from(document.querySelectorAll("button")).find((x) => /^Details on\/off/.test(x.title || ""));
+    if (t) t.click();
+    else document.dispatchEvent(new KeyboardEvent("keydown", { key: "i", bubbles: true }));
+  });
+  return b;
+}
+
+// ☆ - quick rating popup, using the rating system set in Stash (Settings → Interface → Editing).
+let scale = null;
+async function getScale() {
+  if (scale) return scale;
+  let o = {};
+  try { o = (await gql("{configuration{ui}}")).configuration.ui.ratingSystemOptions || {}; } catch (e) {}
+  if (o.type === "stars" && (o.starPrecision || "full") === "full")
+    scale = { opts: [1, 2, 3, 4, 5].map((n) => ({ label: n + "★", v: n * 20 })), show: (r) => r / 20 };
+  else if (o.type === "stars")
+    scale = { opts: [...Array(10)].map((_, i) => ({ label: String((i + 1) / 2), v: (i + 1) * 10 })), show: (r) => Math.round(r / 10) / 2 };
+  else
+    scale = { opts: [...Array(10)].map((_, i) => ({ label: String(i + 1), v: (i + 1) * 10 })), show: (r) => Math.round(r / 10) };
+  return scale;
+}
+function closeRate() {
+  const m = document.querySelector(".px-rate-menu");
+  if (m) m.remove();
+}
+document.addEventListener("pointerdown", (e) => {
+  if (!e.target.closest || !e.target.closest(".px-rate-menu, .px-rate-btn")) closeRate();
+}, true);
+
+function rateBtn(ctx, isAlive) {
+  const b = iconBtn("☆", "Rate this scene");
+  b.classList.add("px-rate-btn");
+  let rating = null;
+  const label = (s) => {
+    b.textContent = rating ? "★" + s.show(rating) : "☆";
+    b.title = rating ? "Rating " + s.show(rating) + " - click to change" : "Rate this scene";
+    b.style.color = rating ? "#f5c518" : "";
+  };
+  Promise.all([getScale(), gql("query($id:ID!){findScene(id:$id){rating100}}", { id: ctx.id })])
+    .then(([s, d]) => { if (!isAlive()) return; rating = d.findScene && d.findScene.rating100; label(s); })
+    .catch(() => {});
+  b.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (document.querySelector(".px-rate-menu")) return closeRate();
+    const s = await getScale();
+    const r = b.getBoundingClientRect();
+    const m = document.createElement("div");
+    m.className = "px-rate-menu";
+    m.style.cssText =
+      "position:fixed;z-index:99999;background:rgba(20,20,20,.96);border:1px solid #444;border-radius:8px;padding:8px;" +
+      "display:grid;grid-template-columns:repeat(5,2.4em);gap:5px;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.5);";
+    const head = document.createElement("div");
+    head.textContent = "Rate scene";
+    head.style.cssText = "grid-column:1/-1;color:#ccc;text-align:center;margin-bottom:2px";
+    m.appendChild(head);
+    const set = async (v) => {
+      try {
+        await gql("mutation($id:ID!,$r:Int){sceneUpdate(input:{id:$id,rating100:$r}){rating100}}", { id: ctx.id, r: v });
+        rating = v;
+        label(s);
+        flash(ctx.video, v ? "Rated " + s.show(v) : "Rating cleared");
+      } catch (err) { alert("Rating failed: " + err.message); }
+      closeRate();
+    };
+    s.opts.forEach((o, i) => {
+      const x = document.createElement("button");
+      x.type = "button";
+      x.textContent = o.label;
+      const on = rating === o.v;
+      x.style.cssText = "height:2.2em;border:0;border-radius:4px;cursor:pointer;font-weight:bold;color:" + (on ? "#000" : "#fff") +
+        ";background:" + (on ? "#f5c518" : "hsl(" + Math.round(((i + 1) / s.opts.length) * 120) + ",55%,32%)");
+      x.addEventListener("click", (ev) => { ev.stopPropagation(); set(o.v); });
+      m.appendChild(x);
+    });
+    const c = document.createElement("button");
+    c.type = "button";
+    c.textContent = "Clear rating";
+    c.style.cssText = "grid-column:1/-1;border:0;border-radius:4px;background:#555;color:#fff;cursor:pointer;height:2em;margin-top:2px";
+    c.addEventListener("click", (ev) => { ev.stopPropagation(); set(null); });
+    m.appendChild(c);
+    ["click", "keydown", "dblclick"].forEach((t) => m.addEventListener(t, (ev) => ev.stopPropagation()));
+    document.body.appendChild(m);
+    const w = m.offsetWidth, h = m.offsetHeight;
+    m.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + "px";
+    m.style.top = Math.max(8, r.top - h - 8) + "px";
+  });
+  return b;
+}
+
 export default function setup(stashui) {
   if (stashui.has && !stashui.has("slot:player.controls")) return;
   stashui.addSlot("player.controls", {
     id: "player-extras-markers",
-    title: "Player Extras: marker skip",
+    title: "Player Extras",
     match: (ctx) => ctx.kind === "scene",
     mount(el, ctx) {
       let alive = true, markers = null, onKey = null;
@@ -83,7 +189,10 @@ export default function setup(stashui) {
         return b;
       };
       settings().then((s) => {
-        if (!alive || s.disableMarkerSkip) return;
+        if (!alive) return;
+        if (!s.disablePanelButton) el.append(panelBtn());
+        if (!s.disableRating) el.append(rateBtn(ctx, () => alive));
+        if (s.disableMarkerSkip) return;
         el.append(btn("«", "Previous marker  [", -1), btn("»", "Next marker  ]", 1));
         onKey = (e) => {
           if (e.ctrlKey || e.metaKey || e.altKey || (e.key !== "[" && e.key !== "]")) return;
@@ -98,6 +207,7 @@ export default function setup(stashui) {
       return () => {
         alive = false;
         if (onKey) document.removeEventListener("keydown", onKey, true);
+        closeRate();
         el.innerHTML = "";
       };
     },
