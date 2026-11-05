@@ -1,0 +1,30 @@
+name: Player Extras
+description: Extra controls for the scene player - details-panel button, motion heatmap, previous/next marker buttons and keys, a rating popup, a task-queue button, VR zoom and scroll memory. Each one can be switched off.
+version: 1.1.0
+ui:
+  javascript:
+    - player_extras.js
+  assets:
+    /: assets
+settings:
+  disablePanelButton:
+    displayName: Turn off ☰ details-panel button
+    type: BOOLEAN
+  disableHeatmap:
+    displayName: Turn off motion heatmap
+    type: BOOLEAN
+  disableMarkerSkip:
+    displayName: Turn off « » marker skip (buttons and [ ] keys)
+    type: BOOLEAN
+  disableRating:
+    displayName: Turn off ☆ rating popup
+    type: BOOLEAN
+  disableQueueButton:
+    displayName: Turn off ⚙ task-queue button
+    type: BOOLEAN
+  disableVrZoom:
+    displayName: Turn off VR zoom
+    type: BOOLEAN
+  disableScrollMemory:
+    displayName: Turn off scroll memory
+    type: BOOLEAN
