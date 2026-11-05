@@ -1,6 +1,6 @@
 name: Player Extras
 description: Extra controls for the scene player - details-panel button, motion heatmap, previous/next marker buttons and keys, a rating popup, a task-queue button, VR zoom and scroll memory. Each one can be switched off.
-version: 1.1.0
+version: 1.2.0
 ui:
   javascript:
     - player_extras.js
