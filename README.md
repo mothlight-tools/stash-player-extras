@@ -18,7 +18,13 @@ A handful of quality-of-life additions for the Stash scene player. Interface onl
 
 ## Stash UI
 
-If you use the **Stash UI** front end, Player Extras also adds the **« »** marker buttons and the **[** **]** keys to Stash UI's player (it already has its own heatmap, rating, details panel and VR mode). Needs a Stash UI version with the `player.controls` extension spot.
+If you use the **Stash UI** front end, Player Extras also adds these to Stash UI's player control bar:
+
+- **☰** - opens/closes Stash UI's details panel (same as its ⓘ button or the **I** key)
+- **☆ rating popup** - rate without leaving the video
+- **« »** marker buttons and the **[** **]** keys
+
+Stash UI already has its own heatmap (Highlights) and VR mode, so those aren't added. The same "Turn off …" settings apply. Needs a Stash UI version with the `player.controls` extension spot.
 
 ## Install
 
