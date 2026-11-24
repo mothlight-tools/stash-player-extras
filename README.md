@@ -26,6 +26,10 @@ If you use the **Stash UI** front end, Player Extras also adds these to Stash UI
 
 Stash UI already has its own heatmap (Highlights) and VR mode, so those aren't added. The same "Turn off …" settings apply. Needs a Stash UI version with the `player.controls` extension spot.
 
+## DirtyMultiscreen
+
+If you use the **DirtyMultiscreen** plugin, the ☆ rating popup, « » marker buttons and motion heatmap also appear on **every screen of the grid**, each acting on the scene playing there. The **[** **]** keys jump markers on the screen your mouse was last over. (The ☰ button stays on the scene page, since the grid has no details panel.) Don't want them on the grid? Tick **Don't add buttons to DirtyMultiscreen screens**.
+
 ## Install
 
 1. Stash → **Settings → Plugins → Available Plugins → Add Source**

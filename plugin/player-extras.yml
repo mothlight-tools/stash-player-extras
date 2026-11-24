@@ -1,6 +1,6 @@
 name: Player Extras
-description: Extra controls for the scene player - details-panel button, motion heatmap, previous/next marker buttons and keys, a rating popup, a task-queue button, VR zoom and scroll memory. Each one can be switched off.
-version: 1.2.0
+description: Extra controls for the scene player - details-panel button, motion heatmap, previous/next marker buttons and keys, a rating popup, a task-queue button, VR zoom and scroll memory. Also works on every DirtyMultiscreen screen. Each one can be switched off.
+version: 1.3.1
 ui:
   javascript:
     - player_extras.js
@@ -27,4 +27,7 @@ settings:
     type: BOOLEAN
   disableScrollMemory:
     displayName: Turn off scroll memory
+    type: BOOLEAN
+  disableMultiscreen:
+    displayName: Don't add buttons to DirtyMultiscreen screens
     type: BOOLEAN
