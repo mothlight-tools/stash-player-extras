@@ -105,6 +105,53 @@
     insertBefore(bar, b, ".vjs-fullscreen-control");
   });
 
+  /* ---------- 1b. Scene info on hover: ☰ tooltip on the scene page, an ⓘ button on each DirtyMultiscreen screen ---------- */
+  if (on("disablePanelButton")) (function () {
+    const cache = new Map(); // scene id -> promise of "Studio · date\nTitle\nPerformers"
+    const infoOf = (id) => {
+      if (!cache.has(id)) cache.set(id, gql("query($id:ID!){findScene(id:$id){title date studio{name} performers{name}}}", { id })
+        .then((d) => {
+          const s = d && d.findScene;
+          if (!s) return "";
+          return [[s.studio && s.studio.name, s.date].filter(Boolean).join("  ·  "), s.title,
+            (s.performers || []).map((p) => p.name).join(", ")].filter(Boolean).join("\n");
+        }).catch(() => ""));
+      return cache.get(id);
+    };
+    watch(function addInfo() {
+      for (const p of players()) {
+        if (!p.bar || !p.sid) continue;
+        if (p.main) {
+          const b = p.bar.querySelector(".xp-panel-btn");
+          if (b && b.dataset.sid !== p.sid) {
+            b.dataset.sid = p.sid;
+            infoOf(p.sid).then((t) => { if (t) b.title = t + "\n\nShow/hide details panel"; });
+          }
+          continue;
+        }
+        let b = p.bar.querySelector(".xp-info-btn");
+        if (!b) {
+          b = document.createElement("button");
+          b.type = "button";
+          b.className = "vjs-control vjs-button xp-info-btn";
+          b.style.cssText = "cursor:help;width:2.2em;display:flex;align-items:center;justify-content:center;";
+          const g = document.createElement("span");
+          g.textContent = "ⓘ";
+          g.style.cssText = "font-size:1.4em;line-height:1;";
+          b.appendChild(g);
+          b.addEventListener("click", (e) => { e.stopPropagation(); e.preventDefault(); });
+          insertBefore(p.bar, b, ".vjs-fullscreen-control");
+        }
+        if (b.dataset.sid !== p.sid) {   // a screen moves on to other scenes - keep the tooltip current
+          const sid = p.sid;
+          b.dataset.sid = sid;
+          b.title = "Scene info";
+          infoOf(sid).then((t) => { if (t && b.dataset.sid === sid) b.title = t; });
+        }
+      }
+    });
+  })();
+
   /* ---------- 2. Motion heatmap ---------- */
   if (on("disableHeatmap")) (function () {
     const cache = new Map(); // scene id -> promise of heatmap data
