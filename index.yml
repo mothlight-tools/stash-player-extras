@@ -1,8 +1,8 @@
 - id: player-extras
   name: Player Extras
   metadata:
-    description: Player buttons for Stash - details panel, motion heatmap, marker skip, rating popup, scene info on hover, task queue, VR zoom, scroll memory. Also on every DirtyMultiscreen screen.
-  version: 1.3.2
-  date: "2026-11-25 07:16:21"
+    description: Player buttons for Stash - details panel, motion heatmap, marker skip, rating popup, scene info on hover and next to the title, task queue, VR zoom, scroll memory. Also on every DirtyMultiscreen screen.
+  version: 1.4.0
+  date: "2026-11-25 07:20:09"
   path: player-extras.zip
-  sha256: 82b7c1b397d57ef4e346ec7946002c2a7dbb09655e350e72df4205591acf696c
+  sha256: 090c19cc8c87f53c7675cb78429e84ee2cc9e9b8c3a544db264e31ca5fb5bec5
