@@ -54,8 +54,18 @@ const iconBtn = (txt, title) => {
 };
 
 // ☰ - opens/closes Stash UI's own details panel (same as its ⓘ button / the I key).
-function panelBtn() {
+// Its tooltip shows the studio, title and performers, so you can see what's playing without opening the panel.
+function panelBtn(ctx, isAlive) {
   const b = iconBtn("☰", "Details panel on/off  (I)");
+  if (ctx && ctx.id != null)
+    gql("query($id:ID!){findScene(id:$id){title date studio{name} performers{name}}}", { id: ctx.id })
+      .then((d) => {
+        const s = d.findScene;
+        if (!s || (isAlive && !isAlive())) return;
+        const who = (s.performers || []).map((p) => p.name).join(", ");
+        b.title = [[s.studio && s.studio.name, s.date].filter(Boolean).join("  ·  "), s.title, who, "", "Details panel on/off  (I)"]
+          .filter((x, i) => x || i === 3).join("\n").replace(/^\n+/, "");
+      }).catch(() => {});
   b.addEventListener("click", (e) => {
     e.stopPropagation();
     e.preventDefault();
@@ -196,7 +206,7 @@ export default function setup(stashui) {
       };
       settings().then((s) => {
         if (!alive) return;
-        if (!s.disablePanelButton) el.append(panelBtn());
+        if (!s.disablePanelButton) el.append(panelBtn(ctx, () => alive));
         if (!s.disableRating) el.append(rateBtn(ctx, () => alive));
         if (s.disableMarkerSkip) return;
         el.append(btn("«", "Previous marker  [", -1), btn("»", "Next marker  ]", 1));
