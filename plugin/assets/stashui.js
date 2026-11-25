@@ -165,6 +165,28 @@ function rateBtn(ctx, isAlive) {
   return b;
 }
 
+// Studio and performers next to the scene title in the player's top bar (Stash UI only shows the title there).
+function topInfo(ctx, isAlive) {
+  let span = null;
+  gql("query($id:ID!){findScene(id:$id){studio{name} performers{name}}}", { id: ctx.id }).then(async (d) => {
+    const s = d.findScene;
+    if (!s || !isAlive()) return;
+    const bits = [s.studio && s.studio.name, (s.performers || []).map((p) => p.name).join(", ")].filter(Boolean);
+    if (!bits.length) return;
+    let title = null;
+    for (let i = 0; i < 30 && isAlive() && !(title = document.querySelector(".kb-topbar-title")); i++) await new Promise((r) => setTimeout(r, 100));
+    if (!title || !isAlive()) return;
+    title.querySelectorAll(".px-topinfo").forEach((x) => x.remove());
+    span = document.createElement("span");
+    span.className = "px-topinfo";
+    span.textContent = bits.join("  ·  ");
+    span.title = bits.join("\n");
+    span.style.cssText = "margin-left:.7em;font-weight:500;font-size:.8em;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis";
+    title.appendChild(span);
+  }).catch(() => {});
+  return () => { if (span) span.remove(); };
+}
+
 export default function setup(stashui) {
   if (stashui.has && !stashui.has("slot:player.controls")) return;
   stashui.addSlot("player.controls", {
@@ -172,7 +194,7 @@ export default function setup(stashui) {
     title: "Player Extras",
     match: (ctx) => ctx.kind === "scene",
     mount(el, ctx) {
-      let alive = true, markers = null, onKey = null;
+      let alive = true, markers = null, onKey = null, dropTop = null;
       const load = async () => {
         if (!markers) {
           const d = await gql("query($id:ID!){findScene(id:$id){scene_markers{seconds title primary_tag{name}}}}", { id: ctx.id });
@@ -206,6 +228,7 @@ export default function setup(stashui) {
       };
       settings().then((s) => {
         if (!alive) return;
+        if (!s.disableTopbarInfo) dropTop = topInfo(ctx, () => alive);
         if (!s.disablePanelButton) el.append(panelBtn(ctx, () => alive));
         if (!s.disableRating) el.append(rateBtn(ctx, () => alive));
         if (s.disableMarkerSkip) return;
@@ -222,6 +245,7 @@ export default function setup(stashui) {
       }).catch(() => {});
       return () => {
         alive = false;
+        if (dropTop) dropTop();
         if (onKey) document.removeEventListener("keydown", onKey, true);
         closeRate();
         el.innerHTML = "";
