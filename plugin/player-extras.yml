@@ -1,12 +1,16 @@
 name: Player Extras
-description: Extra controls for the scene player - details-panel button, motion heatmap, previous/next marker buttons and keys, a rating popup, scene info on hover (an ⓘ on each multiscreen screen) and next to the title in Stash UI, a task-queue button, VR zoom and scroll memory. Also works on every DirtyMultiscreen screen. Each one can be switched off.
-version: 1.4.0
+description: Extra controls for the scene player - details-panel button, motion heatmap, previous/next marker buttons and keys, a rating popup, scene info on hover (an ⓘ on each multiscreen screen) and next to the title in Stash UI, a task-queue button, VR zoom, scroll memory and (if you turn it on) full screen when you click the player. Also works on every DirtyMultiscreen screen. Each one can be switched off.
+version: 1.5.0
 ui:
   javascript:
     - player_extras.js
   assets:
     /: assets
 settings:
+  enableAutoFullscreen:
+    displayName: Full screen when you click the player (scene page and DirtyMultiscreen)
+    description: Your first click on the video or its controls makes the page full screen (no tabs, address bar or taskbar), so the buttons at the bottom are easy to reach. It stays on while you move between scenes and ends when you leave the player; Esc leaves it any time. Browsers only allow full screen after a click, so it can't start on its own.
+    type: BOOLEAN
   disableTopbarInfo:
     displayName: Turn off studio and performers next to the title (Stash UI top bar)
     type: BOOLEAN

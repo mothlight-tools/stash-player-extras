@@ -526,4 +526,40 @@
     document.addEventListener("click", save, true);
     window.addEventListener("popstate", () => setTimeout(restore, 50));
   })();
+
+  /* ---------- 9. Full screen when you click the player (opt-in) ----------
+     Browsers only allow full screen right after a click or key press, so it starts on your first click on the
+     scene player or a DirtyMultiscreen screen, stays on while you move between scenes, and ends when you go to
+     a page without a player. Esc leaves it; it then stays off until you leave the player page.
+     Inside Stash UI's Classic Stash frame the whole Stash UI page goes full screen (Stash UI's part of this
+     plugin keeps track of it there). */
+  if (cfg.enableAutoFullscreen) (function () {
+    let TOP = window;
+    try { if (window.top !== window && window.top.document) TOP = window.top; } catch (e) {}
+    const D = TOP.document;
+    const isPlayer = () => /^\/scenes\/\d+/.test(location.pathname) || /^\/plugins\/multiscreen/.test(location.pathname);
+    document.addEventListener("click", (e) => {
+      const t = e.target;
+      if (!isPlayer() || D.fullscreenElement || TOP.__pxFsOff || !t || !t.closest) return;
+      if (!t.closest(".scene-player-container, .ms-route") || t.closest(".vjs-fullscreen-control")) return;
+      const req = D.documentElement.requestFullscreen({ navigationUI: "hide" });
+      if (req && req.then) req.then(() => { TOP.__pxFs = true; }).catch(() => {});
+    }, true);
+    if (TOP === window) {
+      D.addEventListener("fullscreenchange", () => {
+        if (D.fullscreenElement || !TOP.__pxFs) return;
+        TOP.__pxFs = false;
+        if (TOP.__pxFsLeaving) TOP.__pxFsLeaving = false; else TOP.__pxFsOff = true;   // you pressed Esc
+      });
+    }
+    let last = location.pathname;
+    setInterval(() => {
+      if (location.pathname === last) return;
+      last = location.pathname;
+      if (isPlayer()) return;
+      TOP.__pxFsOff = false;
+      if (TOP.__pxFs && D.fullscreenElement) { TOP.__pxFsLeaving = true; D.exitFullscreen().catch(() => {}); }
+    }, 300);
+  })();
+
 })();

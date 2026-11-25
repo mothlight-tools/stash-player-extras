@@ -187,7 +187,60 @@ function topInfo(ctx, isAlive) {
   return () => { if (span) span.remove(); };
 }
 
+// Full screen when you click the player (setting "Full screen when you click the player"). Stash UI's own
+// player: the first click on the video or its controls; DirtyMultiscreen / classic scene pages inside the
+// Classic Stash frame are handled by the classic part of the plugin, which makes this whole page full screen.
+// Here we end it when you leave the player, and remember an Esc until then.
+const fsState = { mounted: 0, on: null };
+const embeddedPlayer = () => {
+  let h = location.hash;
+  try { h = decodeURIComponent(h); } catch (e) {}
+  return /extern\/classic\?path=\/(plugins\/multiscreen|scenes\/\d)/.test(h);
+};
+function fsLeaveIfDone() {
+  setTimeout(() => {
+    if (fsState.mounted > 0 || embeddedPlayer()) return;
+    window.__pxFsOff = false;
+    if (window.__pxFs && document.fullscreenElement) { window.__pxFsLeaving = true; document.exitFullscreen().catch(() => {}); }
+  }, 700);   // the next scene's player mounts within this time when you skip to it
+}
+function fsSetup() {
+  if (fsState.on) return fsState.on;
+  fsState.on = settings().then((s) => {
+    if (!s.enableAutoFullscreen) return false;
+    document.addEventListener("fullscreenchange", () => {
+      if (document.fullscreenElement || !window.__pxFs) return;
+      window.__pxFs = false;
+      if (window.__pxFsLeaving) window.__pxFsLeaving = false; else window.__pxFsOff = true;   // you pressed Esc
+    });
+    window.addEventListener("hashchange", fsLeaveIfDone);
+    return true;
+  }).catch(() => false);
+  return fsState.on;
+}
+function fsWatch(el, ctx, isAlive) {
+  let root = null, onClick = null;
+  fsSetup().then((on) => {
+    if (!on || !isAlive()) return;
+    root = el;
+    while (root && ctx.video && !root.contains(ctx.video)) root = root.parentElement;
+    if (!root) return;
+    onClick = () => {
+      if (document.fullscreenElement || window.__pxFsOff) return;
+      document.documentElement.requestFullscreen({ navigationUI: "hide" }).then(() => { window.__pxFs = true; }).catch(() => {});
+    };
+    root.addEventListener("click", onClick, true);
+  });
+  fsState.mounted++;
+  return () => {
+    fsState.mounted--;
+    if (root && onClick) root.removeEventListener("click", onClick, true);
+    fsLeaveIfDone();
+  };
+}
+
 export default function setup(stashui) {
+  fsSetup();
   if (stashui.has && !stashui.has("slot:player.controls")) return;
   stashui.addSlot("player.controls", {
     id: "player-extras-markers",
@@ -195,6 +248,7 @@ export default function setup(stashui) {
     match: (ctx) => ctx.kind === "scene",
     mount(el, ctx) {
       let alive = true, markers = null, onKey = null, dropTop = null;
+      const dropFs = fsWatch(el, ctx, () => alive);
       const load = async () => {
         if (!markers) {
           const d = await gql("query($id:ID!){findScene(id:$id){scene_markers{seconds title primary_tag{name}}}}", { id: ctx.id });
@@ -245,6 +299,7 @@ export default function setup(stashui) {
       }).catch(() => {});
       return () => {
         alive = false;
+        dropFs();
         if (dropTop) dropTop();
         if (onKey) document.removeEventListener("keydown", onKey, true);
         closeRate();

@@ -15,6 +15,7 @@ A handful of quality-of-life additions for the Stash scene player. Interface onl
 | **⚙ Task-queue button** | A floating button (bottom-right) whenever Stash has tasks queued. Cancel one task, cancel everything waiting in front of a task ("⏭ next"), or clear all. |
 | **VR zoom** | While a VR mode (180 / 360) is on, the mouse wheel zooms the VR view in and out. Normal videos are unaffected. |
 | **Scroll memory** | Going Back to a list or wall returns you to where you were scrolled. |
+| **Full screen on click** *(off until you turn it on)* | Your first click on the video or its controls (or on a DirtyMultiscreen screen) makes the page full screen: no tabs, address bar or taskbar, so the buttons at the bottom are easy to hit. It stays on while you move between scenes and ends when you leave the player. Esc leaves it, and it then stays off until you leave the player. Browsers only allow full screen after a click, so it can't start by itself. Works in classic Stash, Stash UI and DirtyMultiscreen (also inside Stash UI). |
 
 ## Stash UI
 
@@ -39,7 +40,7 @@ If you use the **DirtyMultiscreen** plugin, the ☆ rating popup, « » marker b
 
 ## Settings
 
-All features are on by default. In **Settings → Plugins → Player Extras**, tick "Turn off …" for anything you don't want, then refresh the page.
+All features except *Full screen on click* are on by default. In **Settings → Plugins → Player Extras**, tick "Turn off …" for anything you don't want (or "Full screen when you click the player" to turn that on), then refresh the page.
 
 ## Notes
 
